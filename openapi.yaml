@@ -47,12 +47,12 @@ paths:
                 startCrawlDate:
                   type: string
                   format: date-time
-                  description: "\"Crawl date\" refers to the date that Metaphor discovered a link, which is more granular and can be more useful than published date. If startCrawlDate is specified, results will only include links that were crawled after startCrawlDate. Must be specified in ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ)"
+                  description: '"Crawl date" refers to the date that Metaphor discovered a link, which is more granular and can be more useful than published date. If startCrawlDate is specified, results will only include links that were crawled after startCrawlDate. Must be specified in ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ)'
                   example: "2023-01-01T00:00:00Z"
                 endCrawlDate:
                   type: string
                   format: date-time
-                  description: "\"Crawl date\" refers to the date that Metaphor discovered a link, which is more granular and can be more useful than published date. If endCrawlDate is specified, results will only include links that were crawled before endCrawlDate. Must be specified in ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ)"
+                  description: '"Crawl date" refers to the date that Metaphor discovered a link, which is more granular and can be more useful than published date. If endCrawlDate is specified, results will only include links that were crawled before endCrawlDate. Must be specified in ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ)'
                   example: "2023-12-31T23:59:59Z"
                 startPublishedDate:
                   type: string
@@ -95,12 +95,17 @@ paths:
                           type: string
                           nullable: true
                           description: "If available, the author of the content. Nullable"
+                        score:
+                          type: number
+                          format: float
+                          description: "A number from 0 to 1 representing similarity between the query/url and the result"
               example:
                 results:
                   - title: "Google Search is Dying"
                     url: https://dkb.blog/p/google-search-is-dying
                     publishedDate: "2022-02-14"
                     author: "Dmitri Brereton"
+                    score: 0.5
       security:
         - apikey: []
   /findSimilar:
@@ -157,7 +162,6 @@ paths:
                   example: "2023-12-31T23:59:59Z"
               required:
                 - url
-
       responses:
         "200":
           description: OK
@@ -187,12 +191,63 @@ paths:
                           type: string
                           nullable: true
                           description: "If available, the author of the content. Nullable"
+                        score:
+                          type: number
+                          format: float
+                          description: "A number from 0 to 1 representing similarity between the query/url and the result"
               example:
                 results:
                   - title: "Misperceptions on Moloch"
                     url: "https://slatestarcodex.com/2014/08/01/misperceptions-on-moloch/"
                     publishedDate: "2014-08-01"
                     author: "Scott Alexander"
+                    score: 0.2
+      security:
+        - apikey: []
+  /contents:
+    get:
+      operationId: getContents
+      summary: Get contents of documents
+      description: Retrieve contents of documents based on a list of document IDs.
+      parameters:
+        - in: query
+          name: ids
+          schema:
+            type: array
+            items:
+              type: string
+          required: true
+          description: "An array of document IDs obtained from either /search or /findSimilar endpoints."
+          example: ["0bU6rTFJWNyHxW2dp66ahQ", "1aI5kUIO8VuLxT3db47cnM"]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    description: "A list of document contents containing URL, title, and extract. In the future, we will support more content types."
+                    items:
+                      type: object
+                      properties:
+                        url:
+                          type: string
+                          format: uri
+                          description: "The URL of the document, which directs to the web page containing the content."
+                        title:
+                          type: string
+                          description: "The title of the document, typically representing the main heading of the content."
+                        content:
+                          type: string
+                          description: "The content of the document."
+              example:
+                results:
+                  - url: https://dkb.blog/p/google-search-is-dying
+                    title: "Google Search is Dying"
+                    content: "Google Search, once the crown jewel of the internet..."
       security:
         - apikey: []
 
@@ -222,5 +277,6 @@ components:
           nullable: true
           description: "If available, the author of the content. Nullable"
         score:
-          type: float
+          type: number
+          format: float
           description: "A number from 0 to 1 representing similarity between the query/url and the result"
